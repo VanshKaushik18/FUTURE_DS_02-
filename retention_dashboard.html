@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Retention Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Libre+Baskerville:ital@0;1&family=Syne:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#f0ede6;--ink2:#c8c4bc;--ink3:#8a8880;
+  --paper:#0d0d0b;--paper2:#161614;--paper3:#1f1f1c;--paper4:#272723;
+  --accent:#e8622a;--accent2:#2da870;--accent3:#4a8fd4;--gold:#d4a020;
+  --ff-head:'Syne',sans-serif;--ff-mono:'DM Mono',monospace;--ff-serif:'Libre Baskerville',serif;
+}
+html,body{min-height:100vh;background:var(--paper);color:var(--ink);font-family:var(--ff-head)}
+.shell{max-width:1140px;margin:0 auto;padding:28px 24px 48px}
+
+/* ── Masthead ── */
+.masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid var(--ink);padding-bottom:14px;margin-bottom:28px}
+.masthead h1{font-size:30px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+.masthead-sub{font-size:11px;font-family:var(--ff-mono);color:var(--ink3);margin-top:5px;text-transform:uppercase;letter-spacing:1px}
+.masthead-right{text-align:right}
+.badge{font-family:var(--ff-mono);font-size:10px;background:var(--accent);color:#fff;padding:3px 10px;border-radius:3px;display:inline-block;letter-spacing:0.5px}
+.period{font-size:11px;font-family:var(--ff-mono);color:var(--ink3);margin-top:5px}
+
+/* ── Tabs ── */
+.nav-tabs{display:flex;gap:0;border-bottom:1px solid var(--paper3);margin-bottom:24px;overflow-x:auto}
+.tab-btn{font-family:var(--ff-mono);font-size:11px;letter-spacing:0.5px;text-transform:uppercase;padding:9px 18px;background:none;border:none;border-bottom:2px solid transparent;color:var(--ink3);cursor:pointer;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--ink);border-bottom-color:var(--paper3)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── KPIs ── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:700px){.kpi-row{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--paper2);border:0.5px solid var(--paper3);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.kpi.red::before{background:var(--accent)}
+.kpi.green::before{background:var(--accent2)}
+.kpi.blue::before{background:var(--accent3)}
+.kpi.gold::before{background:var(--gold)}
+.kpi-label{font-family:var(--ff-mono);font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.8px}
+.kpi-val{font-size:26px;font-weight:700;margin:4px 0 2px;line-height:1;letter-spacing:-0.5px}
+.kpi-delta{font-family:var(--ff-mono);font-size:11px}
+.kpi-delta.pos{color:var(--accent2)}.kpi-delta.neg{color:var(--accent)}
+
+/* ── Panels ── */
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:800px){.two-col,.three-col{grid-template-columns:1fr}}
+.panel{background:var(--paper2);border:0.5px solid var(--paper3);border-radius:6px;padding:16px}
+.panel-full{background:var(--paper2);border:0.5px solid var(--paper3);border-radius:6px;padding:16px;margin-bottom:16px}
+.panel-title{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink3);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.panel-title span{font-weight:500;color:var(--ink)}
+.subtitle-tag{font-size:9px;background:var(--paper3);padding:2px 7px;border-radius:3px;color:var(--ink3)}
+
+/* ── Charts ── */
+.bar-chart-wrap{position:relative;width:100%;height:220px}
+.line-chart-wrap{position:relative;width:100%;height:200px}
+.donut-wrap{position:relative;width:100%;height:180px}
+
+/* ── Cohort heatmap ── */
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{font-family:var(--ff-mono);font-size:10px;padding:5px 12px;border:0.5px solid var(--paper3);border-radius:3px;background:none;color:var(--ink3);cursor:pointer;text-transform:uppercase;letter-spacing:0.5px;transition:all .15s}
+.filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cohort-table{width:100%;border-collapse:collapse;font-family:var(--ff-mono);font-size:11px}
+.cohort-table th{padding:5px 8px;text-align:center;color:var(--ink3);font-weight:400;font-size:10px;border-bottom:0.5px solid var(--paper3)}
+.cohort-table td{padding:5px 7px;text-align:center;border-radius:3px;font-size:10px;font-weight:500;cursor:default;transition:opacity .15s}
+.cohort-table tr:hover td{opacity:.8}
+.cohort-table .row-label{text-align:left;padding-left:0;color:var(--ink2);font-size:9px}
+
+/* ── Churn reasons ── */
+.churn-reason-list{list-style:none}
+.churn-reason-list li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--paper3);font-size:13px}
+.churn-reason-list li:last-child{border-bottom:none}
+.reason-bar-bg{flex:1;height:6px;background:var(--paper3);border-radius:3px;overflow:hidden}
+.reason-bar-fill{height:100%;border-radius:3px;background:var(--accent)}
+.reason-pct{font-family:var(--ff-mono);font-size:11px;color:var(--ink3);min-width:32px;text-align:right}
+.reason-label{font-size:12px;min-width:150px;color:var(--ink2)}
+
+/* ── LTV sparklines ── */
+.sparkline-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:600px){.sparkline-row{grid-template-columns:1fr}}
+.spark-card{background:var(--paper2);border:0.5px solid var(--paper3);border-radius:6px;padding:12px 14px}
+.spark-val{font-size:22px;font-weight:700;letter-spacing:-0.5px;margin:4px 0 0}
+.spark-lbl{font-family:var(--ff-mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:0.8px}
+
+/* ── Segment table ── */
+.segment-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:0.5px solid var(--paper3);flex-wrap:wrap;gap:8px}
+.segment-item:last-child{border-bottom:none}
+.seg-name{font-size:13px;color:var(--ink)}
+.seg-meta{font-family:var(--ff-mono);font-size:10px;color:var(--ink3)}
+.seg-ltv{font-family:var(--ff-mono);font-size:13px;font-weight:500}
+.seg-ltv.hi{color:var(--accent2)}.seg-ltv.lo{color:var(--accent)}
+
+/* ── Recommendations ── */
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.rec-grid{grid-template-columns:1fr}}
+.rec-card{background:var(--paper2);border:0.5px solid var(--paper3);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden}
+.rec-card::after{content:attr(data-priority);position:absolute;top:10px;right:12px;font-family:var(--ff-mono);font-size:9px;text-transform:uppercase;letter-spacing:0.5px;padding:2px 7px;border-radius:3px}
+.rec-card.high::after{background:rgba(200,65,10,.15);color:var(--accent)}
+.rec-card.med::after{background:rgba(26,110,74,.15);color:var(--accent2)}
+.rec-card.low::after{background:rgba(29,79,140,.12);color:var(--accent3)}
+.rec-icon{font-size:18px;margin-bottom:8px}
+.rec-title{font-size:13px;font-weight:700;margin-bottom:5px}
+.rec-desc{font-size:11px;color:var(--ink3);line-height:1.65}
+.rec-impact{font-family:var(--ff-mono);font-size:10px;margin-top:9px;color:var(--accent2)}
+
+/* ── Insight band ── */
+.insight-band{background:var(--paper3);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;padding:10px 14px;margin-bottom:16px}
+.insight-band p{font-size:12px;color:var(--ink2);line-height:1.75}
+.insight-band strong{color:var(--ink);font-style:italic;font-family:var(--ff-serif)}
+
+/* ── Footnote ── */
+.footnote{font-family:var(--ff-mono);font-size:9px;color:var(--ink3);margin-top:24px;padding-top:14px;border-top:0.5px solid var(--paper3);line-height:1.8}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- MASTHEAD -->
+  <div class="masthead">
+    <div>
+      <h1>Retention Intelligence</h1>
+      <div class="masthead-sub">Subscription analytics · Churn &amp; lifetime analysis</div>
+    </div>
+    <div class="masthead-right">
+      <div class="badge">Live Dashboard</div>
+      <div class="period">Jan 2023 – Jun 2024 · 18 Months</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="switchTab('cohort')">Cohort Analysis</button>
+    <button class="tab-btn" onclick="switchTab('churn')">Churn Drivers</button>
+    <button class="tab-btn" onclick="switchTab('ltv')">Lifetime Value</button>
+    <button class="tab-btn" onclick="switchTab('recommendations')">Action Plan</button>
+  </div>
+
+  <!-- ══════════════ OVERVIEW ══════════════ -->
+  <div id="tab-overview" class="tab-pane active">
+
+    <div class="kpi-row">
+      <div class="kpi red">
+        <div class="kpi-label">Monthly Churn Rate</div>
+        <div class="kpi-val">4.7%</div>
+        <div class="kpi-delta neg">▲ +0.8pp vs prior quarter</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Net Revenue Retention</div>
+        <div class="kpi-val">108%</div>
+        <div class="kpi-delta pos">▲ +3pp vs prior quarter</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Avg. Customer LTV</div>
+        <div class="kpi-val">$1,840</div>
+        <div class="kpi-delta pos">▲ +$120 vs prior quarter</div>
+      </div>
+      <div class="kpi gold">
+        <div class="kpi-label">12-Month Retention</div>
+        <div class="kpi-val">61%</div>
+        <div class="kpi-delta neg">▼ −4pp vs prior year</div>
+      </div>
+    </div>
+
+    <div class="insight-band">
+      <p><strong>Key finding:</strong> Churn is accelerating in months 3–5 post-acquisition (+22% vs prior year), driven by onboarding friction and feature underutilisation — while expansion revenue from retained customers masks the underlying attrition risk.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Monthly Churn &amp; Retention Trend <span class="subtitle-tag">18 months</span></div>
+        <div class="bar-chart-wrap">
+          <canvas id="churnTrendChart" role="img" aria-label="Line chart showing monthly churn and retention rates over 18 months">Monthly churn and retention trend.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Churn by Customer Segment</div>
+        <div class="donut-wrap">
+          <canvas id="segmentDonut" role="img" aria-label="Donut chart showing churn distribution by customer segment">Churn by segment.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-full">
+      <div class="panel-title">Active Subscribers vs. Churned — Monthly Stack <span class="subtitle-tag">volume</span></div>
+      <div class="bar-chart-wrap" style="height:200px">
+        <canvas id="stackedBar" role="img" aria-label="Stacked bar chart of active and churned subscribers by month">Active vs churned subscribers monthly.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ COHORT ══════════════ -->
+  <div id="tab-cohort" class="tab-pane">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setCohortView(this,'retention')">Retention %</button>
+      <button class="filter-btn" onclick="setCohortView(this,'revenue')">Revenue ($)</button>
+    </div>
+    <div class="panel-full">
+      <div class="panel-title">Cohort Retention Heatmap <span class="subtitle-tag">by acquisition month · darker = stronger retention</span></div>
+      <div id="cohortTableWrap" style="overflow-x:auto"></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Cohort Retention Curves</div>
+        <div class="line-chart-wrap">
+          <canvas id="cohortCurves" role="img" aria-label="Line chart showing retention curves for 6 cohorts over 12 months">Cohort retention curves.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Month-1 vs Month-6 Retention by Cohort</div>
+        <div class="bar-chart-wrap" style="height:200px">
+          <canvas id="cohortBars" role="img" aria-label="Bar chart comparing month 1 and month 6 retention per cohort">M1 vs M6 retention.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ CHURN DRIVERS ══════════════ -->
+  <div id="tab-churn" class="tab-pane">
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Primary Churn Reasons <span class="subtitle-tag">exit survey n=1,240</span></div>
+        <ul class="churn-reason-list" id="churnReasonList"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Churn Rate by Subscription Age</div>
+        <div class="bar-chart-wrap" style="height:200px">
+          <canvas id="churnAgeChart" role="img" aria-label="Bar chart showing churn rate by subscription age in months">Churn rate by subscription age.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col">
+      <div class="panel">
+        <div class="panel-title">By Plan Tier</div>
+        <div class="donut-wrap" style="height:160px">
+          <canvas id="planDonut" role="img" aria-label="Donut chart of churn distribution by plan tier">Churn by plan tier.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">By Acquisition Channel</div>
+        <div class="donut-wrap" style="height:160px">
+          <canvas id="channelDonut" role="img" aria-label="Donut chart of churn by acquisition channel">Churn by channel.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">By Geography</div>
+        <div class="donut-wrap" style="height:160px">
+          <canvas id="geoDonut" role="img" aria-label="Donut chart of churn by geography">Churn by geography.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-full">
+      <div class="panel-title">Feature Usage vs. Churn Risk Correlation <span class="subtitle-tag">churn lift vs average (1× = baseline)</span></div>
+      <div class="bar-chart-wrap" style="height:190px">
+        <canvas id="featureChart" role="img" aria-label="Horizontal bar chart showing how feature disuse lifts churn risk relative to average">Feature vs churn lift.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ LTV ══════════════ -->
+  <div id="tab-ltv" class="tab-pane">
+    <div class="sparkline-row">
+      <div class="spark-card">
+        <div class="spark-lbl">Avg LTV · All segments</div>
+        <div class="spark-val">$1,840</div>
+        <canvas id="sp1" height="44" role="img" aria-label="Sparkline showing LTV increasing trend">LTV trend upward.</canvas>
+      </div>
+      <div class="spark-card">
+        <div class="spark-lbl">LTV : CAC Ratio</div>
+        <div class="spark-val">3.8×</div>
+        <canvas id="sp2" height="44" role="img" aria-label="Sparkline showing LTV to CAC ratio increasing">LTV CAC trend.</canvas>
+      </div>
+      <div class="spark-card">
+        <div class="spark-lbl">Avg. Payback Period</div>
+        <div class="spark-val">9.2 mo</div>
+        <canvas id="sp3" height="44" role="img" aria-label="Sparkline showing payback period decreasing">Payback period trend.</canvas>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">LTV by Customer Segment</div>
+        <div class="bar-chart-wrap" style="height:220px">
+          <canvas id="ltvSegChart" role="img" aria-label="Bar chart showing average LTV by customer segment">LTV by segment.</canvas>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">LTV Distribution Buckets</div>
+        <div class="bar-chart-wrap" style="height:220px">
+          <canvas id="ltvDistChart" role="img" aria-label="Bar chart showing distribution of customers across LTV bands">LTV distribution.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-full">
+      <div class="panel-title">Segment Breakdown <span class="subtitle-tag">retention · LTV · churn risk</span></div>
+      <div id="segmentTable"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════ ACTION PLAN ══════════════ -->
+  <div id="tab-recommendations" class="tab-pane">
+    <div class="insight-band">
+      <p>Recommendations are ranked by estimated impact on 12-month net revenue retention. <strong>Immediate priorities</strong> target the month 3–5 drop-off window identified in cohort analysis.</p>
+    </div>
+    <div class="rec-grid" id="recGrid"></div>
+    <div class="panel-full" style="margin-top:16px">
+      <div class="panel-title">Projected Retention Recovery — Intervention Scenarios</div>
+      <div class="bar-chart-wrap" style="height:220px">
+        <canvas id="scenarioChart" role="img" aria-label="Bar chart showing projected 12-month retention under different intervention scenarios">Scenario projection chart.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Data sources: CRM export · Billing system · Exit survey (n=1,240) · Support tickets · Product analytics &nbsp;|&nbsp;
+    Jan 2023 – Jun 2024 · 18 months of observations &nbsp;|&nbsp;
+    Cohort retention = % of original cohort still active at month M &nbsp;|&nbsp;
+    LTV = ARPU ÷ monthly churn rate &nbsp;|&nbsp;
+    NRR = (starting MRR + expansion − contraction − churn) ÷ starting MRR &nbsp;|&nbsp;
+    Figures are structurally representative for a B2B/B2C hybrid SaaS business
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+/* ─── Theme ─── */
+const isDark = true;
+const ink    = isDark ? '#f0ede6' : '#0f0f0d';
+const ink2   = isDark ? '#c8c4bc' : '#3a3a35';
+const ink3   = isDark ? '#8a8880' : '#7a7a72';
+const paper2 = isDark ? '#1e1e1a' : '#eeeae2';
+const paper3 = isDark ? '#252520' : '#e4e0d6';
+const accent  = isDark ? '#e8622a' : '#c8410a';
+const accent2 = isDark ? '#2da870' : '#1a6e4a';
+const accent3 = isDark ? '#4a8fd4' : '#1d4f8c';
+const gold    = isDark ? '#d4a020' : '#b8860b';
+const purple  = '#9b59b6';
+const orange  = '#e67e22';
+
+Chart.defaults.color = ink3;
+Chart.defaults.borderColor = paper3;
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size   = 10;
+
+/* ─── Shared data ─── */
+const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+const CHURN_TS = [3.8,4.1,4.3,4.0,3.9,4.2,4.5,4.7,4.3,4.6,4.8,4.9,5.1,4.7,4.9,5.2,4.7,4.5];
+const RET_TS   = CHURN_TS.map(v => +(100 - v).toFixed(1));
+
+/* ─── Helpers ─── */
+function mkChart(id, cfg) { return new Chart(document.getElementById(id), cfg); }
+function alpha(hex, a) { // add alpha to 6-char hex
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ══════════ OVERVIEW ══════════ */
+mkChart('churnTrendChart', {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      { label: 'Churn %',     data: CHURN_TS, borderColor: accent,  borderWidth: 2, pointRadius: 3, pointBackgroundColor: accent,  fill: false, tension: 0.35, yAxisID: 'y'  },
+      { label: 'Retention %', data: RET_TS,   borderColor: accent2, borderWidth: 2, pointRadius: 3, pointBackgroundColor: accent2, fill: false, tension: 0.35, yAxisID: 'y2' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x:  { ticks: { maxRotation: 0 } },
+      y:  { position: 'left',  ticks: { callback: v => v + '%' } },
+      y2: { position: 'right', min: 90, max: 100, ticks: { callback: v => v + '%' }, grid: { drawOnChartArea: false } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+mkChart('segmentDonut', {
+  type: 'doughnut',
+  data: {
+    labels: ['SMB', 'Mid-Market', 'Enterprise', 'Self-Serve'],
+    datasets: [{ data: [38, 27, 12, 23], backgroundColor: [accent, gold, accent2, accent3], borderWidth: 2, borderColor: paper2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '65%',
+    plugins: { legend: { position: 'right', labels: { boxWidth: 10, padding: 10, font: { size: 10 } } } }
+  }
+});
+
+const ACTIVE  = [820,841,863,852,878,894,911,902,928,941,958,963,971,948,962,980,975,988];
+const CHURNED = [32,34,38,35,34,37,42,40,38,44,46,49,52,48,50,54,49,47];
+mkChart('stackedBar', {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [
+      { label: 'Active',  data: ACTIVE,   backgroundColor: alpha(accent2, 0.35), borderColor: accent2, borderWidth: 1 },
+      { label: 'Churned', data: CHURNED,  backgroundColor: alpha(accent,  0.35), borderColor: accent,  borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { x: { stacked: true, ticks: { maxRotation: 0 } }, y: { stacked: true } },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } }
+  }
+});
+
+/* ══════════ COHORT ══════════ */
+const COHORT_LABELS = ['Jan 23','Mar 23','May 23','Jul 23','Sep 23','Nov 23'];
+const RET_MATRIX = [
+  [100,84,71,63,58,54,51,48,46,44,42,41],
+  [100,82,70,61,56,52,49,46,44,42,41,null],
+  [100,86,74,66,61,57,54,51,49,47,null,null],
+  [100,83,72,64,59,55,52,49,47,null,null,null],
+  [100,87,76,68,63,59,56,53,null,null,null,null],
+  [100,85,75,67,62,58,55,null,null,null,null,null],
+];
+const ARPU_MULT = [42,58,31,87,24,65];
+const REV_MATRIX = RET_MATRIX.map((row, ri) => row.map(v => v === null ? null : Math.round(v * ARPU_MULT[ri])));
+
+function buildCohortTable(mode) {
+  const data = mode === 'retention' ? RET_MATRIX : REV_MATRIX;
+  const pct  = mode === 'retention';
+  const maxVal = pct ? 100 : Math.max(...data.flat().filter(v => v !== null));
+  const headers = ['Cohort','M0','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11'];
+  function cellColor(v) {
+    if (v === null) return 'transparent';
+    const r = v / maxVal;
+    return isDark
+      ? `rgb(${Math.round(30 + r*20)},${Math.round(30 + r*80)},${Math.round(30 + r*60)})`
+      : `rgb(${Math.round(240 - (1-r)*60)},${Math.round(248 - (1-r)*40)},${Math.round(240 - (1-r)*60)})`;
+  }
+  let html = '<table class="cohort-table"><thead><tr>';
+  headers.forEach(h => html += `<th>${h}</th>`);
+  html += '</tr></thead><tbody>';
+  data.forEach((row, ri) => {
+    html += `<tr><td class="row-label">${COHORT_LABELS[ri]}</td>`;
+    row.forEach(v => {
+      if (v === null) {
+        html += `<td style="background:transparent;color:${ink3}">—</td>`;
+      } else {
+        html += `<td style="background:${cellColor(v)};color:${ink}">${pct ? v + '%' : '$' + v}</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  document.getElementById('cohortTableWrap').innerHTML = html;
+}
+buildCohortTable('retention');
+
+function setCohortView(btn, mode) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  buildCohortTable(mode);
+}
+
+const COHORT_COLORS = [accent, accent2, accent3, gold, purple, orange];
+mkChart('cohortCurves', {
+  type: 'line',
+  data: {
+    labels: ['M0','M1','M2','M3','M4','M5','M6','M7','M8','M9','M10','M11'],
+    datasets: RET_MATRIX.map((row, i) => ({
+      label: COHORT_LABELS[i],
+      data: row,
+      borderColor: COHORT_COLORS[i],
+      borderWidth: 1.5,
+      pointRadius: 2,
+      fill: false,
+      tension: 0.3,
+      spanGaps: false
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { min: 40, max: 100, ticks: { callback: v => v + '%' } } },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8, font: { size: 9 } } } }
+  }
+});
+
+mkChart('cohortBars', {
+  type: 'bar',
+  data: {
+    labels: COHORT_LABELS,
+    datasets: [
+      { label: 'Month 1', data: [84,82,86,83,87,85], backgroundColor: alpha(accent2, 0.55), borderColor: accent2, borderWidth: 1 },
+      { label: 'Month 6', data: [54,52,57,55,59,58], backgroundColor: alpha(accent,  0.55), borderColor: accent,  borderWidth: 1 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { ticks: { callback: v => v + '%' } } },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 8 } } }
+  }
+});
+
+/* ══════════ CHURN DRIVERS ══════════ */
+const REASONS = [
+  { label: 'Price too high / value mismatch',  pct: 31 },
+  { label: 'Switched to competitor',            pct: 24 },
+  { label: 'Not using enough features',         pct: 19 },
+  { label: 'Poor onboarding experience',        pct: 12 },
+  { label: 'Technical issues / bugs',           pct:  8 },
+  { label: 'Business closed / restructured',    pct:  6 },
+];
+const reasonList = document.getElementById('churnReasonList');
+REASONS.forEach(r => {
+  reasonList.innerHTML += `
+    <li>
+      <span class="reason-label">${r.label}</span>
+      <span class="reason-bar-bg"><span class="reason-bar-fill" style="width:${(r.pct/31*100).toFixed(0)}%"></span></span>
+      <span class="reason-pct">${r.pct}%</span>
+    </li>`;
+});
+
+mkChart('churnAgeChart', {
+  type: 'bar',
+  data: {
+    labels: ['M1','M2','M3','M4','M5','M6','M7-9','M10-12','13-18','19-24'],
+    datasets: [{
+      label: 'Churn rate',
+      data: [3.2,4.1,6.8,7.4,6.9,5.2,4.3,3.8,2.9,2.1],
+      backgroundColor: [...Array(6).fill(alpha(accent, 0.6)), ...Array(4).fill(alpha(accent2, 0.6))],
+      borderColor:     [...Array(6).fill(accent),             ...Array(4).fill(accent2)],
+      borderWidth: 1, borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { ticks: { callback: v => v + '%' } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+function donut(id, labels, data, colors) {
+  mkChart(id, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: paper2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 8, padding: 6, font: { size: 9 } } } }
+    }
+  });
+}
+donut('planDonut',    ['Starter','Pro','Business','Enterprise'], [44,31,18,7],   [accent,gold,accent2,accent3]);
+donut('channelDonut', ['Paid Search','Organic','Referral','Social','Direct','Email'], [28,22,19,14,11,6], [accent,accent2,accent3,gold,purple,orange]);
+donut('geoDonut',     ['North America','Europe','APAC','LATAM','Other'], [38,29,21,8,4], [accent,accent2,accent3,gold,'#95a5a6']);
+
+mkChart('featureChart', {
+  type: 'bar',
+  data: {
+    labels: ['No integrations set up','0 exports in last 30d','Low login frequency','No team members added','Dashboard not customised','Billing page visits (high)'],
+    datasets: [{
+      label: 'Churn lift vs avg',
+      data: [2.8, 2.3, 1.9, 1.6, 1.3, 1.1],
+      backgroundColor: [alpha(accent,0.8),alpha(accent,0.7),alpha(accent,0.55),alpha(gold,0.55),alpha(accent3,0.55),alpha(accent2,0.55)],
+      borderWidth: 0, borderRadius: 3
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    scales: { x: { min: 0, max: 3.2, ticks: { callback: v => v + '×' } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+/* ══════════ LTV ══════════ */
+function sparkline(id, data, color) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'line',
+    data: { labels: data.map((_,i) => i), datasets: [{ data, borderColor: color, borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.4 }] },
+    options: {
+      responsive: false, animation: false,
+      scales: { x: { display: false }, y: { display: false } },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+  });
+}
+sparkline('sp1', [1580,1620,1690,1710,1750,1780,1820,1840], accent2);
+sparkline('sp2', [3.1,3.2,3.4,3.5,3.6,3.7,3.8,3.8],        accent2);
+sparkline('sp3', [11.2,10.8,10.4,10.1,9.9,9.7,9.4,9.2],     accent);
+
+mkChart('ltvSegChart', {
+  type: 'bar',
+  data: {
+    labels: ['Enterprise','Mid-Market','SMB Pro','SMB Starter','Self-Serve'],
+    datasets: [{
+      label: 'Avg LTV',
+      data: [8400, 3200, 1840, 920, 340],
+      backgroundColor: [accent2, accent3, gold, accent, purple],
+      borderWidth: 0, borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { ticks: { callback: v => '$' + v.toLocaleString() } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+mkChart('ltvDistChart', {
+  type: 'bar',
+  data: {
+    labels: ['<$200','$200-500','$500-1k','$1k-2k','$2k-5k','$5k+'],
+    datasets: [{
+      label: 'Customers %',
+      data: [18, 24, 21, 16, 12, 9],
+      backgroundColor: alpha(accent3, 0.55), borderColor: accent3, borderWidth: 1, borderRadius: 3
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { ticks: { callback: v => v + '%' } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+const SEGMENTS = [
+  { name:'Enterprise',   count:'142',   ret:'88%', ltv:'$8,400', risk:'Low',      churn:'2.1%', cls:'hi' },
+  { name:'Mid-Market',   count:'681',   ret:'74%', ltv:'$3,200', risk:'Medium',   churn:'4.2%', cls:'hi' },
+  { name:'SMB Pro',      count:'2,340', ret:'61%', ltv:'$1,840', risk:'High',     churn:'5.8%', cls:'lo' },
+  { name:'SMB Starter',  count:'3,820', ret:'49%', ltv:'$920',   risk:'High',     churn:'7.4%', cls:'lo' },
+  { name:'Self-Serve',   count:'8,120', ret:'31%', ltv:'$340',   risk:'Critical', churn:'11.2%',cls:'lo' },
+];
+const segTable = document.getElementById('segmentTable');
+segTable.innerHTML = SEGMENTS.map(s => {
+  const riskColor = s.risk === 'Critical' ? accent : s.risk === 'High' ? gold : accent2;
+  return `<div class="segment-item">
+    <div><div class="seg-name">${s.name}</div><div class="seg-meta">${s.count} customers · ${s.churn} churn</div></div>
+    <div style="text-align:center"><div style="font-family:var(--ff-mono);font-size:10px;color:var(--ink3)">12-mo ret</div><div style="font-family:var(--ff-mono);font-size:13px;font-weight:500">${s.ret}</div></div>
+    <div class="seg-ltv ${s.cls}">${s.ltv}</div>
+    <div style="font-family:var(--ff-mono);font-size:10px;padding:3px 10px;border-radius:3px;background:${riskColor}22;color:${riskColor}">${s.risk}</div>
+  </div>`;
+}).join('');
+
+/* ══════════ ACTION PLAN ══════════ */
+const RECS = [
+  { icon:'⚡', title:'Rebuild months 3–5 onboarding',       desc:'Deploy a structured 90-day success programme for SMB Pro and Starter cohorts. Assign automated milestone check-ins at day 14, 45, and 75.',  impact:'Est. impact: −1.8pp churn in affected segment',  cls:'high', priority:'High' },
+  { icon:'💡', title:'Usage-triggered intervention alerts',  desc:'Flag low-engagement signals (no login >7d, 0 exports, unused integrations) and trigger CSM or automated email outreach at defined thresholds.', impact:'Est. impact: −0.9pp overall churn rate',            cls:'high', priority:'High' },
+  { icon:'💰', title:'Price anchoring & value comms',        desc:'31% cite value mismatch. Send usage recaps, ROI reports, and peer-benchmarking emails at month 2 and 4 to surface hidden value before renewal intent forms.', impact:'Est. impact: −1.2pp voluntary churn',           cls:'high', priority:'High' },
+  { icon:'🔁', title:'Paid Search cohort re-engagement',     desc:'Paid Search churns at 2.1× organic rate. Redesign post-sign-up flows for this channel with a 14-day structured trial extension offer.',         impact:'Est. impact: +6pp M6 retention for PPC cohort',  cls:'med',  priority:'Med'  },
+  { icon:'📦', title:'Enterprise expansion programme',       desc:'Enterprise NRR sits at 121%. Formalise a QBR cadence and introduce a multi-seat expansion credit for accounts with 5+ active users.',            impact:'Est. impact: +4pp NRR',                           cls:'med',  priority:'Med'  },
+  { icon:'🔬', title:'Self-Serve conversion optimisation',   desc:'11.2% monthly churn in Self-Serve erodes CAC recovery. A/B test contextual upgrade prompts at feature limits, targeting conversion to SMB Starter at month 2.', impact:'Est. impact: +8pp 6-month retention',   cls:'low',  priority:'Low'  },
+];
+document.getElementById('recGrid').innerHTML = RECS.map(r =>
+  `<div class="rec-card ${r.cls}" data-priority="${r.priority}">
+    <div class="rec-icon">${r.icon}</div>
+    <div class="rec-title">${r.title}</div>
+    <div class="rec-desc">${r.desc}</div>
+    <div class="rec-impact">${r.impact}</div>
+  </div>`
+).join('');
+
+mkChart('scenarioChart', {
+  type: 'bar',
+  data: {
+    labels: ['Current baseline','+ Onboarding fix','+ Usage alerts','+ Value comms','+ All three combined','+ Full roadmap'],
+    datasets: [{
+      label: '12-month retention %',
+      data: [61, 65, 67, 69, 74, 79],
+      backgroundColor: [paper3, alpha(accent3,0.55), alpha(accent3,0.7), alpha(accent3,0.85), alpha(accent2,0.7), alpha(accent2,0.9)],
+      borderColor:     [ink3, accent3, accent3, accent3, accent2, accent2],
+      borderWidth: 1, borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { y: { min: 50, max: 85, ticks: { callback: v => v + '%' } } },
+    plugins: { legend: { display: false } }
+  }
+});
+
+/* ══════════ Tab switcher ══════════ */
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const t = btn.getAttribute('onclick').match(/switchTab\('(\w+)'\)/)[1];
+    btn.classList.toggle('active', t === name);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+</body>
+</html>
